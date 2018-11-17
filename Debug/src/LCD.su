@@ -1,0 +1,4 @@
+LCD.c:13:6:Init_SPI	8	static
+LCD.c:71:6:LireMemoireEEPROM	48	static
+LCD.c:105:6:EcrireMemoireEEPROM	48	static
+LCD.c:185:9:SPISend	16	static
