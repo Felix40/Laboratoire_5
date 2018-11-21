@@ -18,6 +18,10 @@ void Delay(__IO uint32_t nTime);
 void TimingDelay_Decrement(void);
 void TimingGlobal_Decrement(void);
 
+void init_LED(void);
+void LED_ON(void);
+void LED_OFF(void);
+
 #endif /* __MAIN_H */
 
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

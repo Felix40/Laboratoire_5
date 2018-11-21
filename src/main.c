@@ -11,10 +11,10 @@ int main(void)
     /* Capture error */ 
     while (1);
   }
-
+  init_LED();       /*initalise la LED*/
   init_LCD_Pins(); /*initalise les pins qui seront utilisees par le LCD*/
   INIT_UART();     /*initalise les pins du module UART (ainsi que le module lui-meme*/
-
+  Activation_LCD();
 
   while (1)
   {
@@ -23,6 +23,26 @@ int main(void)
 
      Delay(500);
   }
+}
+
+void init_LED(void){
+
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+    GPIO_Init(GPIOD, &GPIO_InitStructure);
+}
+
+void LED_ON(void){
+    GPIO_SetBits(GPIOD, GPIO_Pin_12);
+}
+
+void LED_OFF(void){
+	GPIO_ResetBits(GPIOD, GPIO_Pin_12);
 }
 
 /**
