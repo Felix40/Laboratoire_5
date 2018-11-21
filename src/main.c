@@ -3,19 +3,25 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-char dest[];
 
 int main(void)
 {
-  if (SysTick_Config(SystemCoreClock / 1000))
+  if (SysTick_Config(SystemCoreClock / 1000)) /*interrupt every 1ms*/
   { 
     /* Capture error */ 
     while (1);
   }
 
+  init_LCD_Pins(); /*initalise les pins qui seront utilisees par le LCD*/
+  INIT_UART();     /*initalise les pins du module UART (ainsi que le module lui-meme*/
+
+
   while (1)
   {
-	EcrireMemoireEEPROM(8, 1, dest); /*test function*/
+     Ecriture_temps(); /*Affiche les initales+temps sur la premiere ligne (mise a jour a chaque execution de code*/
+	//ajouter commande reception et affichage uart
+
+     Delay(500);
   }
 }
 
@@ -42,6 +48,15 @@ void TimingDelay_Decrement(void)
   { 
     TimingDelay--;
   }
+}
+
+void TimingGlobal_Decrement(void){
+	if (TimingGlobal != 0){
+		TimingGlobal--;       /*Si une seconde ne s'est pas ecoulee, alors un decremente*/
+	}
+	else
+		temps_ecoule++; /*si une seconde ecoule en interruption, alors une seconde ajoutee*/
+	    TimingGlobal = 1000; /*on remet le TimingGlobal a 1000 pour compter une nouvelle seconde*/
 }
 
 #ifdef  USE_FULL_ASSERT

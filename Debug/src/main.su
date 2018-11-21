@@ -1,5 +1,6 @@
 core_cm4.h:1156:22:NVIC_SetPriority	16	static
 core_cm4.h:1281:26:SysTick_Config	16	static
-main.c:8:5:main	8	static
-main.c:27:6:Delay	16	static
-main.c:39:6:TimingDelay_Decrement	4	static
+main.c:7:5:main	8	static
+main.c:33:6:Delay	16	static
+main.c:45:6:TimingDelay_Decrement	4	static
+main.c:53:6:TimingGlobal_Decrement	4	static

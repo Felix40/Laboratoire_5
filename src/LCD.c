@@ -1,196 +1,213 @@
-/* Includes ------------------------------------------------------------------*/
-#include <stdio.h>
+
 #include "LCD.h"
 
+/*Acces memoire*/
+int volatile * const ODRD_ADDRESS = (int *) 0x40020c14;  /*Addresse pour parler au LCD*/
+int volatile * const IDRC_ADDRESS = (int *) 0x40020810;  /*Addresse pour envoyer HIGH sur la matrice du keyboard*/
+int volatile * const ODRA_ADDRESS = (int *) 0x40020014;  /*Addresse pour lire les donnes du keyboard*/
+int volatile * const ODRE_ADDRESS = (int *) 0x40021014;  /*Addresse pour ecrire le EN*/
 
-/* Pourquoi ici*/
-#ifdef __cplusplus
-extern "C"
-#endif
-/*-------------*/
+/*variable globale d'etat*/
+bool isReset = false; /*Variable signalant si un reset a eu lieu*/
 
-/*Routine d'initalisation du module SPI1 du microcontroleur*/
-void Init_SPI(void){
+int char_counter = 0; /*counter permettant de savoir combien de lettre sont actuellement affiches*/
+int numeros_array[10];/*array contenant les chiffres a afficher*/
+int i = 0; /*increment globale*/
 
-	/*Les pins utilisees par ce module sont :
-	 *PA4 = NSS (Slaver selector, pas utile puisque une memoire)
-	 *PA5 = SCK (la clock, pas active jusqu'a envoie de donnees sur le bus)
-	 *PA6 = MISO (Master in, slave out)
-	 *PA7 = MOSI (Master out, slave in)
-	 */
 
-	/*Initalisation SCKL, Master in, Slave out, Master Out Slave In*/
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7 |GPIO_Pin_6| GPIO_Pin_5;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
+/*fonction permettant d'init les pins liees au clavier (pins IN et OUT)*/
+void init_Keyboard_Pins(void){
+   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE); /*On utilise le port A pour le LCD OUT*/
+   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_3|GPIO_Pin_4;
 
-	/*Connection des pins au module SPI1*/
-	GPIO_PinAFConfig(GPIOA, GPIO_PinSource5, GPIO_AF_SPI1);
-	GPIO_PinAFConfig(GPIOA, GPIO_PinSource6, GPIO_AF_SPI1);
-	GPIO_PinAFConfig(GPIOA, GPIO_PinSource7, GPIO_AF_SPI1);
+   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+   GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-	/*Initalisation du module SPI1*/
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1,ENABLE);
-	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
-	SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
-	SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
-    SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
-    SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
-    SPI_InitStructure.SPI_NSS = SPI_NSS_Soft | SPI_NSSInternalSoft_Set;
-    SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_256;
-    SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
-    SPI_Init(SPI1, &SPI_InitStructure);
+   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE); /*On utilise le port C pour le LCD IN*/
+   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_4|GPIO_Pin_5|GPIO_Pin_6|GPIO_Pin_7|GPIO_Pin_8|GPIO_Pin_9|
+		   GPIO_Pin_10|GPIO_Pin_11|GPIO_Pin_12|GPIO_Pin_13|GPIO_Pin_14|GPIO_Pin_15;
 
-    /*Routine d'initalisation liees aux interactions avec la memoire
-    *Pin 6 = WP (active LOW)
-    *Pin 7 = HOLD (active LOW)
-    *Pin 8 = CS (active LOW)
-    */
-
-	/*Initalisation GPIOC pour usage des pins*/
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_7 |GPIO_Pin_6;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-	GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-    GPIOC->BSRRL|= GPIO_Pin_6|GPIO_Pin_7|GPIO_Pin_8; /*Pin set HIGH*/
-
-    SPI_Cmd(SPI1, ENABLE);
-
-    //SPI1->CR1 = SPI_CR1_MSTR | SPI_CR1_SPE | SPI_CR1_SSM | SPI_CR1_SSI;
+   /*Settings des pins*/
+   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP; //Doit-on le mettre en open drain?
+   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN; //pulldown
+   GPIO_Init(GPIOC, &GPIO_InitStructure);
 }
 
-/*Fonction permettant la lecture de l'information contenue dans la memoire*/
-char LireMemoireEEPROM(unsigned int AdresseEEPROM, unsigned int NbreOctets, unsigned char *Destination){
+/*fonction permettant d'init les pins liees au LCD (pins OUT)*/
+void init_LCD_Pins(void){
 
-	if ((AdresseEEPROM + NbreOctets)> 0x4000 || AdresseEEPROM < 0 || NbreOctets < 0){
-		return 1;
-	}
-	char return_value = 1;
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE); /*On utilise le port D pour le LCD*/
 
-	unsigned int ADDR[2];
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_3|GPIO_Pin_4|
+		  GPIO_Pin_5|GPIO_Pin_6|GPIO_Pin_7| /*DB0 a DB7*/
+		  GPIO_Pin_8 | GPIO_Pin_9; /*RW et RS*/
 
-   	ADDR[0] = (AdresseEEPROM) & 0xFF; //msb
-	ADDR[1] = ((AdresseEEPROM) >> 8) & 0xFF;//lsb
+  /*Settings des pins OUT*/
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  GPIO_Init(GPIOD, &GPIO_InitStructure);
 
-    GPIOC->BSRRH |= GPIO_Pin_8; /*Chip select LOW*/
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE); /*On utilise le port E pour ENABLE*/
 
-    SPISend(0b00000011); /*READ INSTRUCTION*/
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
 
-    SPISend(ADDR[1]); //envoie les 8 msb
+  /*Settings des pins*/
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  GPIO_Init(GPIOE, &GPIO_InitStructure);
 
-    SPISend(ADDR[0]); //envoie les 8 lsb
+}
 
-    for (int i = 0; i < NbreOctets; i++){
+/*fonction d'activation du LCD (LCD pret a ecrire apres appel)*/
+void Activation_LCD(void){
+	/*operation 8 bits et 2 lignes*/
 
-    Destination[i] = SPISend(0b00000000); /*envoi des dummy bits pour recevoir l'information*/
+	Write_LCD(0x0001); /*Display clear*/
 
+	Write_LCD(0x0038); /*Set operation 8 bits sur 2 lignes*/
+
+    Write_LCD(0x000E); /*LCD screen on*/
+
+    Write_LCD(0x0006); /*Set entry mode*/
+
+}
+
+/*fonction d'ecriture de data sur le LCD (prend la valeur du chiffre hexadecimal)*/
+void Write_LCD(int nombre){
+
+	*ODRE_ADDRESS = 0x0001;
+
+	Delay(5);
+
+	*ODRD_ADDRESS = nombre;
+
+	Delay(5);
+
+	*ODRE_ADDRESS= 0x0000;
+
+	Delay(5);
+
+}
+
+/*fonction de lecture des INPUT du keyboard, mets a jour la liste des INPUTS*/
+void Read_Keyboard(void){
+
+	i = 0;  /*increment du tableau*/
+
+    *ODRA_ADDRESS = 0x0002; /*Set la pin 0 HIGH*/
+
+    switch (*IDRC_ADDRESS){
+    case 0x0003:numeros_array[i] = 0x0001, isReset = true, Delay(500);break; /*Ecrit le signal reset*/
+    case 0x0005:numeros_array[i] = 0x0230,i++,Delay(500);break; /*Ecrit 0*/
     }
 
-    GPIOC->BSRRL |= GPIO_Pin_8; /*Chip select HIGH*/
+    *ODRA_ADDRESS = 0x0004; /*Set la pin 1 HIGH*/
+    Delay(100);
 
-    return_value = 0;
+    switch(*IDRC_ADDRESS){
+    case 0x0003: numeros_array[i] = 0x0239,i++,Delay(500);break; /*Ecrit 9*/
+    case 0x0005: numeros_array[i] = 0x0238,i++,Delay(500);break; /*Ecrit 8*/
+    case 0x0011: numeros_array[i] = 0x0237,i++,Delay(500);break; /*Ecrit 7*/
 
-	return return_value;
+    case 0x0007: numeros_array[i] = 0x0239,i++,Delay(500), numeros_array[i] = 0x0238,i++,Delay(500);break; /*Ecrit 98*/
+    case 0x0013: numeros_array[i] = 0x0239,i++,Delay(500), numeros_array[i] = 0x0237,i++,Delay(500);break; /*Ecrit 97*/
+    case 0x0015: numeros_array[i] = 0x0238,i++,Delay(500), numeros_array[i] = 0x0237,i++,Delay(500);break; /*Ecrit 87*/
+    }
+
+    *ODRA_ADDRESS = 0x0008; /*Set la pin 2 HIGH*/
+    Delay(100);
+
+    switch(*IDRC_ADDRESS){
+    case 0x0003: numeros_array[i] = 0x0236,i++,Delay(500);break; /*Ecrit 6*/
+    case 0x0005: numeros_array[i] = 0x0235,i++,Delay(500);break; /*Ecrit 5*/
+    case 0x0011: numeros_array[i] = 0x0234,i++,Delay(500);break; /*Ecrit 4*/
+
+    case 0x0007: numeros_array[i] = 0x0236,i++,Delay(500), numeros_array[i] = 0x0235,i++,Delay(500);break; /*Ecrit 65*/
+    case 0x0013: numeros_array[i] = 0x0236,i++,Delay(500), numeros_array[i] = 0x0234,i++,Delay(500);break; /*Ecrit 64*/
+    case 0x0015: numeros_array[i] = 0x0235,i++,Delay(500), numeros_array[i] = 0x0234,i++,Delay(500);break; /*Ecrit 54*/
+    }
+
+    *ODRA_ADDRESS = 0x0010; /*Set la pin 3 HIGH*/
+    Delay(100);
+
+    switch(*IDRC_ADDRESS){
+    case 0x0003: numeros_array[i] = 0x0233,i++,Delay(500);break; /*Ecrit 3*/
+    case 0x0005: numeros_array[i] = 0x0232,i++,Delay(500);break; /*Ecrit 2*/
+    case 0x0011: numeros_array[i] = 0x0231,i++,Delay(500);break; /*Ecrit 1*/
+
+    case 0x0007: numeros_array[i] = 0x0233,i++,Delay(500), numeros_array[i] = 0x0232,i++,Delay(500);break; /*Ecrit 32*/
+    case 0x0013: numeros_array[i] = 0x0233,i++,Delay(500), numeros_array[i] = 0x0231,i++,Delay(500);break; /*Ecrit 31*/
+    case 0x0015: numeros_array[i] = 0x0232,i++,Delay(500), numeros_array[i] = 0x0231,i++,Delay(500);break; /*Ecrit 21*/
+    }
+
+    char_counter = char_counter+i;
+
+
 }
 
-/*Fonction permettant l'ecriture de l'information contenue dans la memoire*/
-char EcrireMemoireEEPROM(unsigned int AdresseEEPROM, unsigned int NbreOctets, unsigned char *Source){
+/*fonction permettant d'ecrire SMI+initiales*/
+void Ecriture_SMI(void){
 
-	if ((AdresseEEPROM + NbreOctets)> 0x4000 || AdresseEEPROM < 0 || NbreOctets < 0){
-		return 1;
-	}
+	Write_LCD(0x00000253); /*Ecrit S*/
 
-	char return_value = 1;
+	Write_LCD(0x0000024D); /*Ecrit M*/
 
-	unsigned int AddresseCourante;
+	Write_LCD(0x00000249); /*Ecrit I*/
 
-	AddresseCourante = AdresseEEPROM;
+	Write_LCD(0x0000025F); /*Ecrit _*/
 
-    unsigned int ADDR[2];
+	Write_LCD(0x00000246); /*Ecrit F*/
 
- 	ADDR[0] = (AddresseCourante) & 0xFF; //msb
-	ADDR[1] = ((AddresseCourante) >> 8) & 0xFF;//lsb
+	Write_LCD(0x00000244);  /*Ecrit D*/
 
- 	 GPIOC->BSRRH |= GPIO_Pin_8; /*Chip select LOW*/
+	Write_LCD(0x00000246);  /*Ecrit F*/
 
- 	 SPISend(0b00000110);   /*SET WRITE ENABLE LATCH*/
+	Write_LCD(0x00000242);  /*Ecrit B*/
 
-     GPIOC->BSRRL |= GPIO_Pin_8; /*Chip select HIGH*/
-
-     GPIOC->BSRRH |= GPIO_Pin_8;/*Chip select LOW*/
-
-     SPISend(0b00000010); /*WRITE INSTRUCTION*/
-
-     SPISend(ADDR[1]); //envoie les 8 msb
-
-     SPISend(ADDR[0]); //envoie les 8 lsb
-
-	 SPISend(Source[0]);
-
-	 AddresseCourante++;
-
-	for (int i = 1; i < NbreOctets; i++){
-		 if (AddresseCourante%64 == 0){ /*Si addresse courante est sur une nouvelle page*/
-
-			 Delay(10);
-
-			 GPIOC->BSRRL |= GPIO_Pin_8; /*Chip select HIGH*/
-
-			 Delay(10);
-
-			 ADDR[0] = (AddresseCourante) & 0xFF; //msb
-			 ADDR[1] = ((AddresseCourante) >> 8);//lsb
-
-		     GPIOC->BSRRH |= GPIO_Pin_8; /*Chip select LOW*/
-
-		 	 SPISend(0b00000110);   /*SET WRITE ENABLE LATCH*/
-
-		     GPIOC->BSRRL |= GPIO_Pin_8; /*Chip select HIGH*/
-
-		     GPIOC->BSRRH |= GPIO_Pin_8;/*Chip select LOW*/
-
-		     SPISend(0b00000010); /*WRITE INSTRUCTION*/
-
-		     SPISend(ADDR[1]); //envoie les 8 msb
-
-		     SPISend(ADDR[0]); //envoie les 8 lsb
-
-			 SPISend(Source[i]);
-
-			 AddresseCourante++;
-		 }
-		 else{
-		 SPISend(Source[i]);
-		 AddresseCourante++;}
-	}
-
-	Delay(10);
-
-    GPIOC->BSRRL |= GPIO_Pin_8; /*Chip select HIGH*/
-
-	return_value = 0;
-
-    return return_value; /*retourne 0 car tout est ok*/
 }
 
-/*Fonction homemade de transfert SPI (plus robuste)*/
-uint8_t SPISend(uint8_t data){
+void Ecriture_temps(void){
 
-SPI1->DR = data;
+	Write_LCD(0x00000246); /*Ecrit F*/
 
-while (!(SPI1->SR & SPI_I2S_FLAG_TXE));
+	Write_LCD(0x00000244);  /*Ecrit D*/
 
-while (!(SPI1->SR & SPI_I2S_FLAG_RXNE));
+	Write_LCD(0x00000246);  /*Ecrit F*/
 
-while (SPI1->SR & SPI_I2S_FLAG_BSY);
+	Write_LCD(0x00000242);  /*Ecrit B*/
 
-return(SPI1->DR);
+	Write_LCD(temps_ecoule);
 }
+
+
+
+#ifdef  USE_FULL_ASSERT
+
+/**
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
+void assert_failed(uint8_t* file, uint32_t line)
+{ 
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+
+  /* Infinite loop */
+  while (1)
+  {
+  }
+}
+#endif
+

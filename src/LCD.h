@@ -1,24 +1,27 @@
 
-/* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __LCD_H
 #define __LCD_H
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4_discovery.h"
 #include "main.h"
+#include <stdbool.h>
 
-
-SPI_InitTypeDef SPI_InitStructure;
 GPIO_InitTypeDef GPIO_InitStructure;
 
 
-/* Private function prototypes -----------------------------------------------*/
-void Init_SPI(void);
-char LireMemoireEEPROM(unsigned int, unsigned int, unsigned char *);
-char EcrireMemoireEEPROM(unsigned int, unsigned int, unsigned char *);
+void init_LCD_Pins(void);
+void Activation_LCD(void);
+/*va avoir besoin d'un fonction desactivation lcd ici*/
+void Write_LCD(int);
+void Ecriture_temps(void);
 
-/*Homemade fonctions send/receive*/
-uint8_t SPISend(uint8_t data);
+/*les fonction ici ne seront pas utile pour le laboratoire 5*/
+void Read_Keyboard(void);
+void Ecriture_SMI(void);
+void init_Keyboard_Pins(void);
+
+
 
 #endif /* __LCD_H */
 
