@@ -11,6 +11,8 @@ int main(void)
     /* Capture error */ 
     while (1);
   }
+  temps_ecoule = 0x00; /*initalise le temps*/
+  TimingGlobal = 1000; /*initialise le timing global*/
   init_LED();       /*initalise la LED*/
   init_LCD_Pins(); /*initalise les pins qui seront utilisees par le LCD*/
   INIT_UART();     /*initalise les pins du module UART (ainsi que le module lui-meme*/
@@ -18,10 +20,10 @@ int main(void)
 
   while (1)
   {
-     Ecriture_temps(); /*Affiche les initales+temps sur la premiere ligne (mise a jour a chaque execution de code*/
-	//ajouter commande reception et affichage uart
-
-     Delay(500);
+     Ecriture_temps(temps_ecoule); /*Affiche les initales+temps sur la premiere ligne (mise a jour a chaque execution de code*/
+	                   //ajouter commande reception et affichage uart
+     Delay(1000);
+     RESET_LCD();
   }
 }
 
@@ -43,6 +45,10 @@ void LED_ON(void){
 
 void LED_OFF(void){
 	GPIO_ResetBits(GPIOD, GPIO_Pin_12);
+}
+
+void RESET_LCD(void){
+	Write_LCD(0x0001);
 }
 
 /**
@@ -71,12 +77,14 @@ void TimingDelay_Decrement(void)
 }
 
 void TimingGlobal_Decrement(void){
-	if (TimingGlobal != 0){
+	if(TimingGlobal == 0x00){
+		temps_ecoule = temps_ecoule; /*si une seconde ecoule en interruption, alors une seconde ajoutee*/
+	    TimingGlobal = 1000;
+	}                        /*on remet le TimingGlobal a 1000 pour compter une nouvelle seconde*/
+
+     else{
 		TimingGlobal--;       /*Si une seconde ne s'est pas ecoulee, alors un decremente*/
-	}
-	else
-		temps_ecoule++; /*si une seconde ecoule en interruption, alors une seconde ajoutee*/
-	    TimingGlobal = 1000; /*on remet le TimingGlobal a 1000 pour compter une nouvelle seconde*/
+     }
 }
 
 #ifdef  USE_FULL_ASSERT

@@ -175,7 +175,7 @@ void Ecriture_SMI(void){
 
 }
 
-void Ecriture_temps(void){
+void Ecriture_temps(unsigned int temps){
 
 	Write_LCD(0x00000246); /*Ecrit F*/
 
@@ -185,7 +185,7 @@ void Ecriture_temps(void){
 
 	Write_LCD(0x00000242);  /*Ecrit B*/
 
-	Write_LCD(temps_ecoule);
+	Write_LCD(temps);
 }
 
 

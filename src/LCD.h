@@ -14,7 +14,7 @@ void init_LCD_Pins(void);
 void Activation_LCD(void);
 /*va avoir besoin d'un fonction desactivation lcd ici*/
 void Write_LCD(int);
-void Ecriture_temps(void);
+void Ecriture_temps(unsigned int);
 
 /*les fonction ici ne seront pas utile pour le laboratoire 5*/
 void Read_Keyboard(void);

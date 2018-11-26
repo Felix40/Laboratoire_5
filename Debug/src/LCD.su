@@ -4,4 +4,4 @@ LCD.c:71:6:Activation_LCD	8	static
 LCD.c:85:6:Write_LCD	16	static
 LCD.c:102:6:Read_Keyboard	8	static
 LCD.c:158:6:Ecriture_SMI	8	static
-LCD.c:178:6:Ecriture_temps	8	static
+LCD.c:178:6:Ecriture_temps	16	static
