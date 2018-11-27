@@ -1,0 +1,3 @@
+Temps.c:4:6:Convertir_str	16	static
+Temps.c:8:6:Decremente_Global	4	static
+Temps.c:20:6:TM_DELAY_1msHandler	8	static

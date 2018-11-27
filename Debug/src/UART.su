@@ -1,1 +1,2 @@
 UART.c:7:6:INIT_UART	8	static
+UART.c:43:6:Traducteur_Commandes	16	static

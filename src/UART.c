@@ -40,6 +40,19 @@ void INIT_UART(void){
 	USART_Cmd(UART4,ENABLE);
 }
 
+void Traducteur_Commandes(unsigned int commande, unsigned int parametre){
+switch(commande){
+	case 0x41:
+		break;
+
+	case 0x42:
+		break;
+
+	case 0x43:
+		break;
+    }
+}
+
 
 
 

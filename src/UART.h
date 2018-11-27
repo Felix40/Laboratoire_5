@@ -15,6 +15,7 @@ GPIO_InitTypeDef GPIO_InitStructure;
 
 
 void INIT_UART(void);
+void Traducteur_Commandes(unsigned int, unsigned int);
 
 
 #endif /* __UART_H */

@@ -7,19 +7,11 @@
 #include "main.h"
 #include <stdbool.h>
 
-GPIO_InitTypeDef GPIO_InitStructure;
 
 
-void init_LCD_Pins(void);
-void Activation_LCD(void);
-/*va avoir besoin d'un fonction desactivation lcd ici*/
-void Write_LCD(int);
+void init_LCD(void);
 void Ecriture_temps(unsigned int);
-
-/*les fonction ici ne seront pas utile pour le laboratoire 5*/
-void Read_Keyboard(void);
-void Ecriture_SMI(void);
-void init_Keyboard_Pins(void);
+void RESET_LCD(void);
 
 
 
