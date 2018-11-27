@@ -5,6 +5,8 @@
 #ifndef __MAIN_H
 #define __MAIN_H
 
+#define size 20
+
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4_discovery.h"
 #include "LCD.h"
@@ -12,13 +14,14 @@
 #include "tm_stm32f4_hd44780.h"
 #include "tm_stm32f4_delay.h"
 #include "Temps.h"
+#include "LED.h"
 
 
-
-void init_LED(void);
-void LED_ON(void);
-void LED_OFF(void);
 void RESET_LCD(void);
+
+int ptr_ecriture;
+int ptr_lecture;
+char buffer_commandes[size];
 
 #endif /* __MAIN_H */
 

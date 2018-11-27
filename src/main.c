@@ -6,25 +6,26 @@
 
 int main(void)
 {
-  temps_ecoule = 0; /*initalise le temps*/
+  /*initalisation des variables*/
+  temps_ecoule = 0;
   TimingGlobal = 1000;
+  curseur = 0;
+  ptr_ecriture = 0;
+  ptr_lecture = 0;
 
   INIT_UART();     /*initalise les pins du module UART (ainsi que le module lui-meme*/
   init_LCD();      /*initialise le lcd*/
+  init_LED();      /*initalise la LED a interfacer*/
   TM_HD44780_Puts(0, 0,"FDFB");
 
   while (1) {
+	  Delay(1000);
 	  Ecriture_temps(temps_ecoule);
+	  lecture_data_buffer(buffer_commandes);
+
   }
 }
 
-void LED_ON(void){
-    GPIO_SetBits(GPIOD, GPIO_Pin_12);
-}
-
-void LED_OFF(void){
-	GPIO_ResetBits(GPIOD, GPIO_Pin_12);
-}
 
 
 

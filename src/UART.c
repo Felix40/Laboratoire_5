@@ -7,10 +7,10 @@
 void INIT_UART(void){
 
     /*initalisation des proprietes du module*/
-	UART_InitStructure.USART_BaudRate = 9600;
+	UART_InitStructure.USART_BaudRate = 19200;
 	UART_InitStructure.USART_WordLength = USART_WordLength_8b;
-	UART_InitStructure.USART_StopBits = USART_StopBits_2;
-	UART_InitStructure.USART_Parity = USART_Parity_Odd;
+	UART_InitStructure.USART_StopBits = USART_StopBits_1;
+	UART_InitStructure.USART_Parity = USART_Parity_Even;
 	UART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
 	UART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
 
@@ -37,21 +37,99 @@ void INIT_UART(void){
 	GPIO_Init(GPIOC,&GPIO_InitStructure);
 
 	USART_Init(UART4, &UART_InitStructure);
+
+	USART_ITConfig(UART4, USART_IT_RXNE, ENABLE);
+	NVIC_InitStruct.NVIC_IRQChannel = UART4_IRQn;
+	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 1;
+	NVIC_Init(&NVIC_InitStruct);
 	USART_Cmd(UART4,ENABLE);
 }
 
-void Traducteur_Commandes(unsigned int commande, unsigned int parametre){
-switch(commande){
-	case 0x41:
+
+void Traducteur_Commandes(char commande, char parametre,char  checksum){
+
+if((commande+parametre+checksum)%256 == 0){
+	switch(commande){
+	case 0x41: /*allume-eteint la led*/
+		if (parametre == 0x30){
+			LED_OFF();
+		}
+		else if(parametre == 0x31){
+			LED_ON();
+		}
 		break;
 
-	case 0x42:
+	case 0x42:/*efface seconde ligne*/
+		TM_HD44780_Clear();
+		Ecriture_temps(temps_ecoule);
+		curseur = 0;
 		break;
 
-	case 0x43:
+	case 0x43:/*ecrit octet*/
+		if (curseur != 16){ /*pas de depassement*/
+			TM_HD44780_Puts(curseur, 1, &parametre);
+			curseur++;
+		}
+
 		break;
     }
 }
+}
+void ajout_data_buffer(char* buffer, char octet){
+
+	if(ptr_ecriture == 0 && ptr_lecture == 0){ /*etat initale*/
+		buffer[ptr_ecriture] = octet;
+	    ptr_ecriture++;
+       }
+
+	else if (ptr_ecriture > size){
+		ptr_ecriture = 0;
+		buffer[ptr_ecriture] = octet;
+	}
+
+	else if(ptr_ecriture != ptr_lecture){ /*on n'ecrit pas sur une lecture en cours*/
+		buffer[ptr_ecriture] = octet;
+	    ptr_ecriture++;
+	}
+
+
+}
+
+void lecture_data_buffer(char* buffer){
+	if (ptr_lecture >= 21){
+		ptr_lecture = 0;
+	}
+	while(ptr_lecture < ptr_ecriture){
+		Traducteur_Commandes(buffer[ptr_lecture],buffer[ptr_lecture+1],buffer[ptr_lecture+2]);
+		ptr_lecture = ptr_lecture+3;
+	}
+
+}
+
+void UART4_IRQHandler(void){
+
+    if(USART_GetITStatus(UART4, USART_IT_RXNE) != RESET) /*effectue interrupt lorsque recoit*/
+    {
+       USART_ClearITPendingBit(UART4, USART_IT_RXNE);
+       ajout_data_buffer( buffer_commandes , (char) USART_ReceiveData(UART4) ); /*ajoute data au tab*/
+    }
+}
+
+
+
+
+/*autre methode possible*/
+	//if (UART4->SR & USART_FLAG_IDLE) { /* We want IDLE flag only */
+
+		//ajout_data_buffer(buffer_commandes,UART4->DR); /* Read data register */
+		//ptr_ecriture++;
+	//}
+
+
+
+
 
 
 

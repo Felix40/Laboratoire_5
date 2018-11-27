@@ -1,0 +1,3 @@
+LED.c:10:6:init_LED	8	static
+LED.c:22:6:LED_ON	8	static
+LED.c:26:6:LED_OFF	8	static

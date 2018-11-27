@@ -12,10 +12,16 @@
 
 USART_InitTypeDef UART_InitStructure;
 GPIO_InitTypeDef GPIO_InitStructure;
+NVIC_InitTypeDef NVIC_InitStruct;
+
+
+int curseur;
 
 
 void INIT_UART(void);
-void Traducteur_Commandes(unsigned int, unsigned int);
+void Traducteur_Commandes(char, char,char);
+void ajout_data_buffer(char*,char);
+void lecture_data_buffer(char* buffer);
 
 
 #endif /* __UART_H */
