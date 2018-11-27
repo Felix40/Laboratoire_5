@@ -42,15 +42,14 @@ void INIT_UART(void){
 	NVIC_InitStruct.NVIC_IRQChannel = UART4_IRQn;
 	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0;
-	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 1;
+	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
 	NVIC_Init(&NVIC_InitStruct);
 	USART_Cmd(UART4,ENABLE);
 }
 
 
-void Traducteur_Commandes(char commande, char parametre,char  checksum){
+void Traducteur_Commandes(char commande, char parametre, char checksum){
 
-if((commande+parametre+checksum)%256 == 0){
 	switch(commande){
 	case 0x41: /*allume-eteint la led*/
 		if (parametre == 0x30){
@@ -63,6 +62,7 @@ if((commande+parametre+checksum)%256 == 0){
 
 	case 0x42:/*efface seconde ligne*/
 		TM_HD44780_Clear();
+		TM_HD44780_Puts(0, 0,"FDFB");
 		Ecriture_temps(temps_ecoule);
 		curseur = 0;
 		break;
@@ -76,10 +76,10 @@ if((commande+parametre+checksum)%256 == 0){
 		break;
     }
 }
-}
+
 void ajout_data_buffer(char* buffer, char octet){
 
-	if(ptr_ecriture == 0 && ptr_lecture == 0){ /*etat initale*/
+	if(ptr_ecriture ==  ptr_lecture){ /*etat initale*/
 		buffer[ptr_ecriture] = octet;
 	    ptr_ecriture++;
        }
@@ -98,23 +98,27 @@ void ajout_data_buffer(char* buffer, char octet){
 }
 
 void lecture_data_buffer(char* buffer){
+
 	if (ptr_lecture >= 21){
 		ptr_lecture = 0;
 	}
 	while(ptr_lecture < ptr_ecriture){
+		if((buffer[ptr_lecture] + buffer[ptr_lecture + 1] + buffer[ptr_lecture + 2])%256 == 0){
 		Traducteur_Commandes(buffer[ptr_lecture],buffer[ptr_lecture+1],buffer[ptr_lecture+2]);
 		ptr_lecture = ptr_lecture+3;
+		}
 	}
-
 }
 
 void UART4_IRQHandler(void){
 
     if(USART_GetITStatus(UART4, USART_IT_RXNE) != RESET) /*effectue interrupt lorsque recoit*/
     {
+
        USART_ClearITPendingBit(UART4, USART_IT_RXNE);
        ajout_data_buffer( buffer_commandes , (char) USART_ReceiveData(UART4) ); /*ajoute data au tab*/
     }
+    Delay(200);
 }
 
 

@@ -19,8 +19,8 @@ int main(void)
   TM_HD44780_Puts(0, 0,"FDFB");
 
   while (1) {
-	  Delay(1000);
 	  Ecriture_temps(temps_ecoule);
+
 	  lecture_data_buffer(buffer_commandes);
 
   }
