@@ -1,6 +1,6 @@
 tm_stm32f4_delay.h:240:22:Delay	24	static
 UART.c:7:6:INIT_UART	8	static
 UART.c:51:6:Traducteur_Commandes	16	static
-UART.c:80:6:ajout_data_buffer	16	static
-UART.c:100:6:lecture_data_buffer	16	static
-UART.c:113:6:UART4_IRQHandler	8	static
+UART.c:82:6:ajout_data_buffer	16	static
+UART.c:101:6:lecture_data_buffer	24	static
+UART.c:120:6:UART4_IRQHandler	8	static

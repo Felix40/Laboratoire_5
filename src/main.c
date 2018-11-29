@@ -12,16 +12,17 @@ int main(void)
   curseur = 0;
   ptr_ecriture = 0;
   ptr_lecture = 0;
+  counter = 0;
 
   INIT_UART();     /*initalise les pins du module UART (ainsi que le module lui-meme*/
   init_LCD();      /*initialise le lcd*/
   init_LED();      /*initalise la LED a interfacer*/
+  TIM2_INIT();        /*initalise le TIM0*/
   TM_HD44780_Puts(0, 0,"FDFB");
 
   while (1) {
-	  Ecriture_temps(temps_ecoule);
-
-	  lecture_data_buffer(buffer_commandes);
+	 Ecriture_temps(temps_ecoule);
+	 lecture_data_buffer(buffer_commandes);
 
   }
 }

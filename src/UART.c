@@ -68,8 +68,10 @@ void Traducteur_Commandes(char commande, char parametre, char checksum){
 		break;
 
 	case 0x43:/*ecrit octet*/
-		if (curseur != 16){ /*pas de depassement*/
+		if (curseur < 16){ /*pas de depassement*/
 			TM_HD44780_Puts(curseur, 1, &parametre);
+			TM_HD44780_Puts(curseur + 1, 1, "      ");
+			TM_HD44780_Puts(0, 0,"FDFB");
 			curseur++;
 		}
 
@@ -82,9 +84,9 @@ void ajout_data_buffer(char* buffer, char octet){
 	if(ptr_ecriture ==  ptr_lecture){ /*etat initale*/
 		buffer[ptr_ecriture] = octet;
 	    ptr_ecriture++;
-       }
+    }
 
-	else if (ptr_ecriture > size){
+	else if (ptr_ecriture > size - 1){
 		ptr_ecriture = 0;
 		buffer[ptr_ecriture] = octet;
 	}
@@ -94,18 +96,23 @@ void ajout_data_buffer(char* buffer, char octet){
 	    ptr_ecriture++;
 	}
 
-
 }
 
 void lecture_data_buffer(char* buffer){
 
-	if (ptr_lecture >= 21){
-		ptr_lecture = 0;
-	}
-	while(ptr_lecture < ptr_ecriture){
-		if((buffer[ptr_lecture] + buffer[ptr_lecture + 1] + buffer[ptr_lecture + 2])%256 == 0){
-		Traducteur_Commandes(buffer[ptr_lecture],buffer[ptr_lecture+1],buffer[ptr_lecture+2]);
-		ptr_lecture = ptr_lecture+3;
+	while(ptr_lecture != ptr_ecriture){
+        char liste[3];
+
+		for(int i = 0; i < 3; i++) {
+			if(ptr_lecture > size - 1) {
+				ptr_lecture = 0;
+			}
+			liste[i] = buffer[ptr_lecture];
+			ptr_lecture ++;
+		}
+
+		if((liste[0] + liste[1] + liste[2])%256 == 0){
+		Traducteur_Commandes(liste[0],liste[1],liste[2]);
 		}
 	}
 }
