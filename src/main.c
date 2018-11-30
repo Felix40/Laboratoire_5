@@ -17,19 +17,23 @@ int main(void)
   nombre_lecture = 0;
 
   INIT_UART();     /*initalise les pins du module UART (ainsi que le module lui-meme*/
-  init_LCD();      /*initialise le lcd*/
   init_LED();      /*initalise la LED a interfacer*/
-  TIM2_INIT();     /*initalise le TIM0*/
+  TIM2_INIT();     /*initalise le TIM2*/
+  init_Monitoring();/*initalise les GPIO de monitoring*/
+  init_LCD();      /*initialise le lcd*/
   TM_HD44780_Puts(0, 0,"FDFB");
 
   while (1) {
-	  /*ajouter gpio monitoring*/
+
+
+	 GPIO_ResetBits(GPIOA, GPIO_Pin_0); //Reset le monitoring
 	 Ecriture_temps(temps_ecoule);
 	 lecture_data_buffer(buffer_commandes);
+	 GPIO_SetBits(GPIOA, GPIO_Pin_0); //active le monitoring
+
 
   }
 }
-
 
 
 

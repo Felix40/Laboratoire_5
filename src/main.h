@@ -17,8 +17,6 @@
 #include "LED.h"
 
 
-void RESET_LCD(void);
-
 
 int ptr_ecriture;
 int ptr_lecture;

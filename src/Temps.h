@@ -12,16 +12,17 @@
 #include <string.h>
 #include <stdio.h>
 
-TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+NVIC_InitTypeDef NVIC_InitStruct;
 
 __IO uint32_t temps_ecoule; /*initalise le temps*/
 __IO uint32_t TimingGlobal; /*initialise le timing global*/
-int time_counter;
+unsigned int time_counter;
 
 void Convertir_str(char*, unsigned int);
 void Decremente_Global(void);
 void TM_DELAY_1msHandler(void);
-void BoucleDAttente(short);
+void BoucleDAttente(double);
 void TIM2_INIT(void);
 
 
