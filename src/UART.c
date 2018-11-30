@@ -81,26 +81,29 @@ void Traducteur_Commandes(char commande, char parametre, char checksum){
 
 void ajout_data_buffer(char* buffer, char octet){
 
-	if(ptr_ecriture ==  ptr_lecture){ /*etat initale*/
+	if (ptr_ecriture > size - 1){
+			ptr_ecriture = 0;
+			buffer[ptr_ecriture] = octet;
+			ptr_ecriture++;
+			nombre_ecriture++;
+		}
+	else if(ptr_ecriture ==  ptr_lecture){ /*etat initale*/
 		buffer[ptr_ecriture] = octet;
 	    ptr_ecriture++;
+	    nombre_ecriture++;
     }
-
-	else if (ptr_ecriture > size - 1){
-		ptr_ecriture = 0;
-		buffer[ptr_ecriture] = octet;
-	}
 
 	else if(ptr_ecriture != ptr_lecture){ /*on n'ecrit pas sur une lecture en cours*/
 		buffer[ptr_ecriture] = octet;
 	    ptr_ecriture++;
+	    nombre_ecriture++;
 	}
 
 }
 
 void lecture_data_buffer(char* buffer){
 
-	while(ptr_lecture != ptr_ecriture){
+	while(nombre_lecture + 3 <= nombre_ecriture){
         char liste[3];
 
 		for(int i = 0; i < 3; i++) {
@@ -109,6 +112,7 @@ void lecture_data_buffer(char* buffer){
 			}
 			liste[i] = buffer[ptr_lecture];
 			ptr_lecture ++;
+			nombre_lecture++;
 		}
 
 		if((liste[0] + liste[1] + liste[2])%256 == 0){
@@ -119,6 +123,7 @@ void lecture_data_buffer(char* buffer){
 
 void UART4_IRQHandler(void){
 
+	/*gpio monitoring*/
     if(USART_GetITStatus(UART4, USART_IT_RXNE) != RESET) /*effectue interrupt lorsque recoit*/
     {
 

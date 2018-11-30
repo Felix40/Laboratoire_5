@@ -16,7 +16,7 @@ TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
 
 __IO uint32_t temps_ecoule; /*initalise le temps*/
 __IO uint32_t TimingGlobal; /*initialise le timing global*/
-int counter;
+int time_counter;
 
 void Convertir_str(char*, unsigned int);
 void Decremente_Global(void);

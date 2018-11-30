@@ -1,6 +1,6 @@
 Temps.c:4:6:Convertir_str	16	static
 Temps.c:8:6:Decremente_Global	4	static
 Temps.c:20:6:TM_DELAY_1msHandler	8	static
-Temps.c:24:6:BoucleDAttente	16	static
+Temps.c:24:6:BoucleDAttente	24	static
 Temps.c:31:6:TIM2_INIT	8	static
 Temps.c:44:6:TIM2_IRQHandler	4	static

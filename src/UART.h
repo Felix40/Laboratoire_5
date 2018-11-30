@@ -16,7 +16,8 @@ NVIC_InitTypeDef NVIC_InitStruct;
 
 
 int curseur;
-
+int nombre_ecriture;
+int nombre_lecture;
 
 void INIT_UART(void);
 void Traducteur_Commandes(char, char,char);

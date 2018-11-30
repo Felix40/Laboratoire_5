@@ -23,17 +23,17 @@ void TM_DELAY_1msHandler(void){
 
 void BoucleDAttente(short nombre_microseconde_DAttente){
 
-	/*time_wait = nombre_microseconde_DAttente;
-	while(time_wait > counter);
-	counter = 0; /*reset*/
+	int time_wait = nombre_microseconde_DAttente;
+	while(time_wait > time_counter);
+	time_counter = 0; //reset
 }
 
 void TIM2_INIT(void){
 
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
 	/* Time base configuration */
-	TIM_TimeBaseStructure.TIM_Period = 100 - 1; // 1 MHz down to 10 KHz (0.1 ms)
-	TIM_TimeBaseStructure.TIM_Prescaler = 84 - 1; // Down to 1 MHz (adjust per your clock)
+	TIM_TimeBaseStructure.TIM_Period = 100 - 1; // 1 MHz down to 10 KHz (0.1 us)
+	TIM_TimeBaseStructure.TIM_Prescaler = 0;
 	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
 	TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
@@ -42,5 +42,6 @@ void TIM2_INIT(void){
 }
 
 void TIM2_IRQHandler(void){
-	counter++;
+	/*gpio monitoring*/
+	time_counter++;
 }
