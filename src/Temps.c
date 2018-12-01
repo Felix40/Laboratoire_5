@@ -18,9 +18,9 @@ void Decremente_Global(void){
 
 
 void TM_DELAY_1msHandler(void){
-	GPIO_SetBits(GPIOA, GPIO_Pin_6); //active le monitoring
+	STM_EVAL_LEDToggle(LED6);
     Decremente_Global();
-    GPIO_ResetBits(GPIOA, GPIO_Pin_6); //active le monitoring
+
 }
 
 void BoucleDAttente(double nombre_microseconde_DAttente){

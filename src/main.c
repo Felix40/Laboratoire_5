@@ -26,10 +26,10 @@ int main(void)
   while (1) {
 
 
-	 GPIO_ResetBits(GPIOA, GPIO_Pin_0); //Reset le monitoring
+	  STM_EVAL_LEDToggle(LED3);
 	 Ecriture_temps(temps_ecoule);
 	 lecture_data_buffer(buffer_commandes);
-	 GPIO_SetBits(GPIOA, GPIO_Pin_0); //active le monitoring
+
 
 
   }

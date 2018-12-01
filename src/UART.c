@@ -122,7 +122,7 @@ void lecture_data_buffer(char* buffer){
 }
 
 void UART4_IRQHandler(void){
-	 GPIO_SetBits(GPIOA, GPIO_Pin_3); //active le monitoring
+	STM_EVAL_LEDToggle(LED5);
 	/*gpio monitoring*/
     if(USART_GetITStatus(UART4, USART_IT_RXNE) != RESET) /*effectue interrupt lorsque recoit*/
     {
@@ -130,7 +130,7 @@ void UART4_IRQHandler(void){
        USART_ClearITPendingBit(UART4, USART_IT_RXNE);
        ajout_data_buffer( buffer_commandes , (char) USART_ReceiveData(UART4) ); /*ajoute data au tab*/
     }
-    GPIO_ResetBits(GPIOA, GPIO_Pin_3); //reset le monitoring
+
     Delay(200);
 
 }
